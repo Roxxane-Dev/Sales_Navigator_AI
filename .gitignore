@@ -1,0 +1,12 @@
+.env
+.venv/
+data/compras_data.csv
+data/client_features.csv
+data/predictions.csv
+models/scaler.pkl
+models/xgb_model.json
+__pycache__/
+*.pyc
+*.pkl
+.ipynb_checkpoints/
+*.ipynb_checkpoints

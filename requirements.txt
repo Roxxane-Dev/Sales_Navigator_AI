@@ -1,0 +1,13 @@
+pandas
+numpy
+scikit-learn
+xgboost
+optuna
+shap
+matplotlib
+seaborn
+openai
+supabase
+python-dotenv
+tqdm
+jupyter
