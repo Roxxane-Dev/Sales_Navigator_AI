@@ -171,6 +171,17 @@ def train_pipeline(features_path='data/client_features.csv'):
         
     df['shap_top_feature'] = top_features
     df['score_propension'] = final_model.predict_proba(X)[:, 1]
+
+    # Señales de negocio para consultas del agente
+    expo_cols = [c for c in df.columns if c.startswith('exposicion_promo_')]
+    if expo_cols:
+        df['sensibilidad_promo'] = df[expo_cols].mean(axis=1)
+    else:
+        df['sensibilidad_promo'] = 0.0
+
+    promo_median = df['sensibilidad_promo'].median()
+    df['es_sensible_promo'] = (df['sensibilidad_promo'] > promo_median).astype(int)
+    df['es_leal_marca'] = (df['switching_ratio'] < 0.4).astype(int)
     
     logging.info("Step D: Saving outputs")
     with open('models/scaler.pkl', 'wb') as f:
@@ -182,7 +193,8 @@ def train_pipeline(features_path='data/client_features.csv'):
         'id', 'score_propension', 'comprador_activo', 'segmento', 'segmento_nombre', 
         'shap_top_feature', 'edad', 'genero', 'ingreso_anual', 'ocupacion', 
         'n_compras', 'frecuencia', 'tasa_compra', 'marca_favorita', 
-        'switching_ratio', 'recencia', 'dias_entre_visitas_median'
+        'switching_ratio', 'recencia', 'dias_entre_visitas_median',
+        'sensibilidad_promo', 'es_sensible_promo', 'es_leal_marca'
     ]
     existing_output_cols = [c for c in output_cols if c in df.columns]
     final_predictions = df[existing_output_cols]
