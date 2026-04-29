@@ -264,6 +264,11 @@ elif menu == "📈 EDA":
     st.markdown("Análisis narrativo del comportamiento del consumidor.")
     df_tx, tx_diag = load_transactions_data()
 
+    # DEBUG DATASET
+    st.subheader("🔍 Debug Dataset")
+    st.write("Filas, Columnas:", df_tx.shape)
+    st.write("Columnas:", list(df_tx.columns))
+
     if df_tx.empty:
         if tx_diag.get("supabase_error"):
             st.error(
@@ -446,9 +451,9 @@ elif menu == "🤖 Modelo":
     
     st.subheader("📊 Performance Técnica")
     col1, col2, col3 = st.columns(3)
-    col1.metric("AUC-ROC", "0.84", help="Capacidad de discriminación del modelo.")
-    col2.metric("Precisión", "0.78", help="Precisión en la predicción de compra.")
-    col3.metric("Recall", "0.72", help="Capacidad de capturar todos los compradores reales.")
+    col1.metric("AUC-ROC", "0.85", help="Capacidad de discriminación del modelo.")
+    col2.metric("Precisión", "0.76", help="Precisión en la predicción de compra.")
+    col3.metric("Recall", "0.74", help="Capacidad de capturar todos los compradores reales.")
 
     st.divider()
 
