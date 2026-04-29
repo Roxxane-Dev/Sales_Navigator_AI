@@ -114,12 +114,31 @@ def load_transactions_data():
         "local_exists": False,
     }
     try:
-        res = supabase.table("compras_data").select("*", count="exact").limit(60000).execute()
-        diagnostics["source"] = "supabase"
-        diagnostics["supabase_count"] = res.count
-        df_supabase = pd.DataFrame(res.data)
-        if not df_supabase.empty:
-            return df_supabase, diagnostics
+        all_data = []
+        page_size = 1000
+        start = 0
+
+        while True:
+            res = supabase.table("compras_data") \
+                .select("*") \
+                .range(start, start + page_size - 1) \
+                .execute()
+
+            data = res.data
+
+                if not data:
+                    break
+
+            all_data.extend(data)
+            start += page_size
+
+            diagnostics["source"] = "supabase_full"
+            diagnostics["supabase_count"] = len(all_data)
+
+            df_supabase = pd.DataFrame(all_data)
+
+            if not df_supabase.empty:
+                return df_supabase, diagnostics
     except Exception as e:
         diagnostics["supabase_error"] = str(e)
         # Fallback local para desarrollo
@@ -130,7 +149,6 @@ def load_transactions_data():
         diagnostics["source"] = "local_csv"
         return pd.read_csv(path), diagnostics
 
-    # Si Supabase responde pero con 0 filas, intentamos fallback local
     path = "data/compras_data.csv"
     diagnostics["local_exists"] = os.path.exists(path)
     if os.path.exists(path):
