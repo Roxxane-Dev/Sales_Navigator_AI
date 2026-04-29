@@ -78,7 +78,10 @@ def load_predictions(predictions_path: str = "data/predictions.csv"):
                 "recencia": int(row["recencia"]),
                 "dias_entre_visitas_median": float(row["dias_entre_visitas_median"]),
                 "descripcion": str(row["descripcion"]),
-                "embedding": row["embedding"]
+                "embedding": row["embedding"],
+                "sensibilidad_promo": float(row["sensibilidad_promo"]) if "sensibilidad_promo" in row else 0.0,
+                "es_sensible_promo": int(row["es_sensible_promo"]) if "es_sensible_promo" in row else 0,
+                "es_leal_marca": int(row["es_leal_marca"]) if "es_leal_marca" in row else 0
             })
         supabase.table("predictions").upsert(records).execute()
 

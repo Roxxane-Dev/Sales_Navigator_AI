@@ -107,15 +107,36 @@ def load_dashboard_data():
 
 @st.cache_data(ttl=300)
 def load_transactions_data():
+    diagnostics = {
+        "source": None,
+        "supabase_error": None,
+        "supabase_count": None,
+        "local_exists": False,
+    }
     try:
-        res = supabase.table("compras_data").select("*").execute()
-        return pd.DataFrame(res.data)
-    except Exception:
+        res = supabase.table("compras_data").select("*", count="exact").limit(60000).execute()
+        diagnostics["source"] = "supabase"
+        diagnostics["supabase_count"] = res.count
+        df_supabase = pd.DataFrame(res.data)
+        if not df_supabase.empty:
+            return df_supabase, diagnostics
+    except Exception as e:
+        diagnostics["supabase_error"] = str(e)
         # Fallback local para desarrollo
         path = "data/compras_data.csv"
+        diagnostics["local_exists"] = os.path.exists(path)
         if not os.path.exists(path):
-            return pd.DataFrame()
-        return pd.read_csv(path)
+            return pd.DataFrame(), diagnostics
+        diagnostics["source"] = "local_csv"
+        return pd.read_csv(path), diagnostics
+
+    # Si Supabase responde pero con 0 filas, intentamos fallback local
+    path = "data/compras_data.csv"
+    diagnostics["local_exists"] = os.path.exists(path)
+    if os.path.exists(path):
+        diagnostics["source"] = "local_csv"
+        return pd.read_csv(path), diagnostics
+    return pd.DataFrame(), diagnostics
 
 @st.cache_data(ttl=300)
 def load_kpis(df: pd.DataFrame) -> dict:
@@ -241,10 +262,23 @@ if menu == "📊 Dashboard":
 elif menu == "📈 EDA":
     st.title("📈 Exploratory Data Analysis")
     st.markdown("Análisis narrativo del comportamiento del consumidor.")
-    df_tx = load_transactions_data()
+    df_tx, tx_diag = load_transactions_data()
 
     if df_tx.empty:
-        st.error("No se encontraron datos en `compras_data` (Supabase) ni en `data/compras_data.csv`.")
+        if tx_diag.get("supabase_error"):
+            st.error(
+                "No se pudo leer `compras_data` desde Supabase y tampoco existe `data/compras_data.csv` local.\n\n"
+                f"Detalle técnico: {tx_diag['supabase_error']}"
+            )
+        else:
+            st.error(
+                "La conexión a Supabase funciona, pero `compras_data` está vacía (`count=0`) "
+                "y no existe `data/compras_data.csv` local."
+            )
+        st.info(
+            "Verifica que cargaste `compras_data` en el mismo proyecto Supabase de `SUPABASE_URL` "
+            "y que el API key tenga permisos de lectura sobre esa tabla."
+        )
         st.stop()
 
     # INSIGHT ESTRATÉGICO PRINCIPAL

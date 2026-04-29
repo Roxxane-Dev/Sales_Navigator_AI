@@ -109,7 +109,8 @@ def train_pipeline(features_path='data/client_features.csv'):
         return np.mean(scores)
         
     logging.info("Running Optuna tuning...")
-    study = optuna.create_study(direction='maximize')
+    sampler = optuna.samplers.TPESampler(seed=42)
+    study = optuna.create_study(direction='maximize', sampler=sampler)
     study.optimize(objective, n_trials=10)
     
     best_params = study.best_params
@@ -172,7 +173,6 @@ def train_pipeline(features_path='data/client_features.csv'):
     df['shap_top_feature'] = top_features
     df['score_propension'] = final_model.predict_proba(X)[:, 1]
 
-    # Señales de negocio para consultas del agente
     expo_cols = [c for c in df.columns if c.startswith('exposicion_promo_')]
     if expo_cols:
         df['sensibilidad_promo'] = df[expo_cols].mean(axis=1)
