@@ -113,6 +113,7 @@ def load_transactions_data():
         "supabase_count": None,
         "local_exists": False,
     }
+
     try:
         all_data = []
         page_size = 1000
@@ -132,28 +133,33 @@ def load_transactions_data():
             all_data.extend(data)
             start += page_size
 
-            diagnostics["source"] = "supabase_full"
-            diagnostics["supabase_count"] = len(all_data)
+        df_supabase = pd.DataFrame(all_data)
 
-            df_supabase = pd.DataFrame(all_data)
+        diagnostics["source"] = "supabase_full"
+        diagnostics["supabase_count"] = len(df_supabase)
 
-            if not df_supabase.empty:
-                return df_supabase, diagnostics
+        if not df_supabase.empty:
+            return df_supabase, diagnostics
+
     except Exception as e:
         diagnostics["supabase_error"] = str(e)
-        # Fallback local para desarrollo
+
         path = "data/compras_data.csv"
         diagnostics["local_exists"] = os.path.exists(path)
-        if not os.path.exists(path):
-            return pd.DataFrame(), diagnostics
-        diagnostics["source"] = "local_csv"
-        return pd.read_csv(path), diagnostics
+
+        if os.path.exists(path):
+            diagnostics["source"] = "local_csv"
+            return pd.read_csv(path), diagnostics
+
+        return pd.DataFrame(), diagnostics
 
     path = "data/compras_data.csv"
     diagnostics["local_exists"] = os.path.exists(path)
+
     if os.path.exists(path):
         diagnostics["source"] = "local_csv"
         return pd.read_csv(path), diagnostics
+
     return pd.DataFrame(), diagnostics
 
 @st.cache_data(ttl=300)
