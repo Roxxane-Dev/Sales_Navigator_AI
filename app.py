@@ -126,8 +126,8 @@ def load_transactions_data():
 
             data = res.data
 
-                if not data:
-                    break
+            if not data:
+                break
 
             all_data.extend(data)
             start += page_size
