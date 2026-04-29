@@ -107,10 +107,15 @@ def load_dashboard_data():
 
 @st.cache_data(ttl=300)
 def load_transactions_data():
-    path = "data/compras_data.csv"
-    if not os.path.exists(path):
-        return pd.DataFrame()
-    return pd.read_csv(path)
+    try:
+        res = supabase.table("compras_data").select("*").execute()
+        return pd.DataFrame(res.data)
+    except Exception:
+        # Fallback local para desarrollo
+        path = "data/compras_data.csv"
+        if not os.path.exists(path):
+            return pd.DataFrame()
+        return pd.read_csv(path)
 
 @st.cache_data(ttl=300)
 def load_kpis(df: pd.DataFrame) -> dict:
@@ -239,7 +244,7 @@ elif menu == "📈 EDA":
     df_tx = load_transactions_data()
 
     if df_tx.empty:
-        st.error("No se encontró `data/compras_data.csv`. No se puede renderizar el EDA dinámico.")
+        st.error("No se encontraron datos en `compras_data` (Supabase) ni en `data/compras_data.csv`.")
         st.stop()
 
     # INSIGHT ESTRATÉGICO PRINCIPAL

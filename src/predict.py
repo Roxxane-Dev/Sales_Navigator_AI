@@ -1,19 +1,20 @@
 import pandas as pd
 import json
+from src.tools import supabase
 
 def predict_new_visit(client_id: int, visit_context: dict) -> dict:
     
     try:
-        df = pd.read_csv('data/predictions.csv')
+        res = supabase.table("predictions").select(
+            "id, score_propension, comprador_activo, segmento_nombre, shap_top_feature, "
+            "dias_entre_visitas_median, recencia, marca_favorita"
+        ).eq("id", client_id).limit(1).execute()
+        if not res.data:
+            return {"error": f"Client {client_id} not found"}
+        client_row = pd.DataFrame(res.data).iloc[0]
     except Exception as e:
-        return {"error": "Predictions file not found. Run train_model.py first."}
+        return {"error": f"Predictions query failed: {e}"}
         
-    client_data = df[df['id'] == client_id]
-    if client_data.empty:
-        return {"error": f"Client {client_id} not found"}
-        
-    client_row = client_data.iloc[0]
-    
     score = float(client_row['score_propension'])
     dias_median = float(client_row['dias_entre_visitas_median'])
     recencia = float(client_row['recencia'])
